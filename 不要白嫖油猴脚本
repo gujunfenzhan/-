@@ -10,6 +10,10 @@
 
 (function() {
 var toubi = 0;
+var toubiIsOnLoad = false;
+var av = 0;
+var baip;
+var input1;
     window.onload=function(){
         var div = document.createElement("div");
         document.body.appendChild(div);
@@ -20,31 +24,24 @@ var toubi = 0;
         div.style.height = "80px";
         div.style.width = "250px";
         div.style.position = "fixed";
-        div.style.left = "20px;"
+        div.style.left = "30px;"
         div.style.top = "20px";
         div.style.color = "red";
         div.style.zIndex = 1000;
         releaseDiv(div);
-        var toubiHttp = new XMLHttpRequest();
-        toubiHttp.open("GET","https://s1.hdslb.com/bfs/static/account-fe/static/js/5.bde71707f4d1be2742f6.js",true);
-        toubiHttp.onreadystatechange = function(){
-            var toubi2 = toubiHttp;
-            if(toubi2.readyState==4&&toubi2.status==200){
-                var d = toubi2.responseText;
-                d = d.split("已获得")[1].split("/")[0];
-                releaseDiv(div);
-            }
-        }
-        toubiHttp.send();
-
-
         setInterval(function(){
+            reloadExp();
+            releaseDiv(div);
+            toubi1(av);
+            if(av==0&&document.querySelector("head > meta:nth-child(12)").content.indexOf("av")!=-1) {
+                av = document.querySelector("head > meta:nth-child(12)").content.split("av")[1].replace("/", "");
+            }
             if(document.querySelector("#arc_toolbar_report > div.ops > span.like").className=="like"){
                 document.querySelector("#arc_toolbar_report > div.ops > span.like").click();
             }
             if(document.querySelector("#arc_toolbar_report > div.ops > span.collect").className=="collect"&&document.querySelector("head > meta:nth-child(12)").content.indexOf("av")!=-1){
                 var url = "https://api.bilibili.com/x/v3/fav/resource/deal";
-                var av = document.querySelector("head > meta:nth-child(12)").content.split("av")[1].replace("/","");
+                av = document.querySelector("head > meta:nth-child(12)").content.split("av")[1].replace("/","");
                 var csrf = document.cookie.split("bili_jct=")[1].split(";")[0];
                 var canshu = "rid="+av+"&type=2&add_media_ids=1&del_media_ids=&jsonp=jsonp&csrf="+csrf;
                 var xhr = new XMLHttpRequest();
@@ -65,24 +62,52 @@ var toubi = 0;
                 xhr.send(canshu);
 
             }
+            if(toubiIsOnLoad){
+
+            }
         },3000);
-
-
-
-        /*if(document.querySelector("#arc_toolbar_report > div.ops > span.collect").className=="collect"){
-         document.querySelector("#arc_toolbar_report > div.ops > span.collect > canvas").click();
-            alert(123);
-            //document.querySelector("#app > div.v-wrap > div.bili-dialog-m > div > div > div.content > div > ul > li:nth-child(2) > label > i").click();
-            //document.querySelector("#app > div.v-wrap > div.bili-dialog-m > div > div > div.bottom > button").click();
-        }
-        //setInterval();
-*/
-
     }
 
     function releaseDiv(div) {
-        div.innerText = "不要白嫖! 今天已投硬币:"+toubi;
-    }
+        div.innerHTML = "不要白嫖! 今天已投硬币:"+toubi+"<br />"+(toubi>=5?"今天您已完成投币任务，努力做一个不白嫖的人吧!":"同志尚未完成投币任务，需要努力");
 
+
+
+
+    }
+    function reloadExp() {
+        var http = new XMLHttpRequest();
+        http.open("GET","https://www.bilibili.com/plus/account/exp.php",true);
+        http.send();
+        http.onreadystatechange = function () {
+            if(http.readyState ==4&&http.status == 200){
+                var json = http.responseText;
+                var yingbi = JSON.parse(json).number;
+                toubi = yingbi/10;
+                toubiIsOnLoad = true;
+            }
+        }
+    }
+    function reloadYingBi() {
+
+    }
+    function toubi1(av) {
+        if(toubiIsOnLoad&&document.querySelector("#arc_toolbar_report > div.ops > span.coin").className=="coin"&&toubi<5) {
+            if (av != 0&&document.querySelector("head > meta:nth-child(12)").content.indexOf("av")!=-1) {
+                var http = new XMLHttpRequest();
+                http.open("POST", "https://api.bilibili.com/x/web-interface/coin/add", true);
+                http.setRequestHeader("content-type", "application/x-www-form-urlencoded");
+                http.withCredentials = true;
+                http.onreadystatechange = function () {
+                    if (http.readyState == 4 && http.status == 200) {
+                        document.querySelector("#arc_toolbar_report > div.ops > span.coin").setAttribute("class", "coin on");
+                    }
+                }
+                av = document.querySelector("head > meta:nth-child(12)").content.split("av")[1].replace("/", "");
+                var csrf = document.cookie.split("bili_jct=")[1].split(";")[0];
+                http.send("aid=" + av + "&multiply=1&select_like=1&cross_domain=true&csrf=" + csrf);
+            }
+        }
+    }
 })();
 
