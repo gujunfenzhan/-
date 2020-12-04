@@ -1,0 +1,88 @@
+// ==UserScript==
+// @name         不要白嫖不要白嫖
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  try to take over the world!
+// @author       You
+// @match        https://www.bilibili.com/video/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+var toubi = 0;
+    window.onload=function(){
+        var div = document.createElement("div");
+        document.body.appendChild(div);
+
+
+        div.style.fontSize="16px";
+        div.style.backgroundColor = "DarkGray";
+        div.style.height = "80px";
+        div.style.width = "250px";
+        div.style.position = "fixed";
+        div.style.left = "20px;"
+        div.style.top = "20px";
+        div.style.color = "red";
+        div.style.zIndex = 1000;
+        releaseDiv(div);
+        var toubiHttp = new XMLHttpRequest();
+        toubiHttp.open("GET","https://s1.hdslb.com/bfs/static/account-fe/static/js/5.bde71707f4d1be2742f6.js",true);
+        toubiHttp.onreadystatechange = function(){
+            var toubi2 = toubiHttp;
+            if(toubi2.readyState==4&&toubi2.status==200){
+                var d = toubi2.responseText;
+                d = d.split("已获得")[1].split("/")[0];
+                releaseDiv(div);
+            }
+        }
+        toubiHttp.send();
+
+
+        setInterval(function(){
+            if(document.querySelector("#arc_toolbar_report > div.ops > span.like").className=="like"){
+                document.querySelector("#arc_toolbar_report > div.ops > span.like").click();
+            }
+            if(document.querySelector("#arc_toolbar_report > div.ops > span.collect").className=="collect"&&document.querySelector("head > meta:nth-child(12)").content.indexOf("av")!=-1){
+                var url = "https://api.bilibili.com/x/v3/fav/resource/deal";
+                var av = document.querySelector("head > meta:nth-child(12)").content.split("av")[1].replace("/","");
+                var csrf = document.cookie.split("bili_jct=")[1].split(";")[0];
+                var canshu = "rid="+av+"&type=2&add_media_ids=1&del_media_ids=&jsonp=jsonp&csrf="+csrf;
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST",url,true);
+                xhr.withCredentials = true;
+                xhr.setRequestHeader("content-type","application/x-www-form-urlencoded");
+
+                xhr.onreadystatechange = function () {
+
+                    var XMLHttpReq = xhr;
+                    if(XMLHttpReq.readyState==4&&XMLHttpReq.status==200){
+                        var data = XMLHttpReq.responseText;
+                        document.querySelector("#arc_toolbar_report > div.ops > span.collect").setAttribute("class","collect on");
+                    }
+
+                }
+                //var a = JSON.stringify(postData);
+                xhr.send(canshu);
+
+            }
+        },3000);
+
+
+
+        /*if(document.querySelector("#arc_toolbar_report > div.ops > span.collect").className=="collect"){
+         document.querySelector("#arc_toolbar_report > div.ops > span.collect > canvas").click();
+            alert(123);
+            //document.querySelector("#app > div.v-wrap > div.bili-dialog-m > div > div > div.content > div > ul > li:nth-child(2) > label > i").click();
+            //document.querySelector("#app > div.v-wrap > div.bili-dialog-m > div > div > div.bottom > button").click();
+        }
+        //setInterval();
+*/
+
+    }
+
+    function releaseDiv(div) {
+        div.innerText = "不要白嫖! 今天已投硬币:"+toubi;
+    }
+
+})();
+
