@@ -9,11 +9,14 @@
 // ==/UserScript==
 
 (function() {
-var toubi = 0;
-var toubiIsOnLoad = false;
-var av = 0;
-var baip;
-var input1;
+    var toubi = 0; //你今天投币的数量
+    var toubiIsOnLoad = false;//是否查询投币数
+    var av = 0;//视频AV号
+    var baip;
+    var input1;
+    var mid = null; //收藏夹ID
+    var shoucangJSON = null;  //查询收藏夹列表的JSON
+    var shoucang = null; //收藏夹名字选择列表
     window.onload=function(){
         var div = document.createElement("div");
         document.body.appendChild(div);
@@ -30,16 +33,23 @@ var input1;
         div.style.zIndex = 1000;
         releaseDiv(div);
         setInterval(function(){
-            reloadExp();
-            releaseDiv(div);
-            toubi1(av);
+            reloadExp();//刷新投币数
+            releaseDiv(div);//刷新DIV盒子
+            reloadShoucangList();//刷新收藏列表
+            toubi1(av);//投币功能
             if(av==0&&document.querySelector("head > meta:nth-child(12)").content.indexOf("av")!=-1) {
+                //获取AV号
                 av = document.querySelector("head > meta:nth-child(12)").content.split("av")[1].replace("/", "");
             }
+            if(mid == null&& document.getElementsByTagName('html')[0].outerHTML.indexOf("mid=")!=-1){
+                mid = document.getElementsByTagName('html')[0].outerHTML.split("mid=")[1].split("&")[0];
+            }
             if(document.querySelector("#arc_toolbar_report > div.ops > span.like").className=="like"){
+                //点赞功能
                 document.querySelector("#arc_toolbar_report > div.ops > span.like").click();
             }
             if(document.querySelector("#arc_toolbar_report > div.ops > span.collect").className=="collect"&&document.querySelector("head > meta:nth-child(12)").content.indexOf("av")!=-1){
+                //发送收藏请求
                 var url = "https://api.bilibili.com/x/v3/fav/resource/deal";
                 av = document.querySelector("head > meta:nth-child(12)").content.split("av")[1].replace("/","");
                 var csrf = document.cookie.split("bili_jct=")[1].split(";")[0];
@@ -69,7 +79,17 @@ var input1;
     }
 
     function releaseDiv(div) {
-        div.innerHTML = "不要白嫖! 今天已投硬币:"+toubi+"<br />"+(toubi>=5?"今天您已完成投币任务，努力做一个不白嫖的人吧!":"同志尚未完成投币任务，需要努力");
+
+        //刷新DIV
+        if(shoucang==null&&shoucangJSON!=null){
+            shoucang = "<select>";
+            for(var i in shoucangJSON){
+                shoucang = shoucang+"<option value='"+shoucangJSON[i].id+"'>"+shoucangJSON[i].title+""+shoucangJSON[i].id+"</option>>";
+            }
+            shoucang = shoucang+"</select>";
+        }
+        div.innerHTML = "不要白嫖! 今天已投硬币:"+toubi+"<br />"+(toubi>=5?"今天您已完成投币任务，努力做一个不白嫖的人吧!<br />":"同志尚未完成投币任务，需要努力<br />"+(shoucang==null?"":shoucang));
+
 
 
 
@@ -109,5 +129,20 @@ var input1;
             }
         }
     }
+    function reloadShoucangList() {
+        if(mid!=null&&shoucangJSON==null){
+            var url = "https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid="+mid;
+            var http = new XMLHttpRequest();
+            http.open("GET",url,true);
+            http.onreadystatechange = function () {
+                if(http.readyState==4&&http.status==200){
+                    shoucangJSON = JSON.parse(http.responseText);
+                    console.log(shoucangJSON);
+                    shoucangJSON = shoucangJSON.data.list;
+                    console.log(shoucangJSON);
+                }
+            }
+            http.send();
+        }
+    }
 })();
-
