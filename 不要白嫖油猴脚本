@@ -37,6 +37,7 @@
             releaseDiv(div);//刷新DIV盒子
             reloadShoucangList();//刷新收藏列表
             toubi1(av);//投币功能
+            Toshoucang();
             if(av==0&&document.querySelector("head > meta:nth-child(12)").content.indexOf("av")!=-1) {
                 //获取AV号
                 av = document.querySelector("head > meta:nth-child(12)").content.split("av")[1].replace("/", "");
@@ -44,36 +45,9 @@
             if(mid == null&& document.getElementsByTagName('html')[0].outerHTML.indexOf("mid=")!=-1){
                 mid = document.getElementsByTagName('html')[0].outerHTML.split("mid=")[1].split("&")[0];
             }
-            if(document.querySelector("#arc_toolbar_report > div.ops > span.like").className=="like"){
+            if(document.querySelector("#arc_toolbar_report > div.ops > span.like").className=="like"&& document.getElementsByTagName('html')[0].outerHTML.indexOf("mid=")!=-1&&toubiIsOnLoad){
                 //点赞功能
                 document.querySelector("#arc_toolbar_report > div.ops > span.like").click();
-            }
-            if(document.querySelector("#arc_toolbar_report > div.ops > span.collect").className=="collect"&&document.querySelector("head > meta:nth-child(12)").content.indexOf("av")!=-1){
-                //发送收藏请求
-                var url = "https://api.bilibili.com/x/v3/fav/resource/deal";
-                av = document.querySelector("head > meta:nth-child(12)").content.split("av")[1].replace("/","");
-                var csrf = document.cookie.split("bili_jct=")[1].split(";")[0];
-                var canshu = "rid="+av+"&type=2&add_media_ids=1&del_media_ids=&jsonp=jsonp&csrf="+csrf;
-                var xhr = new XMLHttpRequest();
-                xhr.open("POST",url,true);
-                xhr.withCredentials = true;
-                xhr.setRequestHeader("content-type","application/x-www-form-urlencoded");
-
-                xhr.onreadystatechange = function () {
-
-                    var XMLHttpReq = xhr;
-                    if(XMLHttpReq.readyState==4&&XMLHttpReq.status==200){
-                        var data = XMLHttpReq.responseText;
-                        document.querySelector("#arc_toolbar_report > div.ops > span.collect").setAttribute("class","collect on");
-                    }
-
-                }
-                //var a = JSON.stringify(postData);
-                xhr.send(canshu);
-
-            }
-            if(toubiIsOnLoad){
-
             }
         },3000);
     }
@@ -96,6 +70,7 @@
 
     }
     function reloadExp() {
+        if(toubiIsOnLoad==true)return;
         var http = new XMLHttpRequest();
         http.open("GET","https://www.bilibili.com/plus/account/exp.php",true);
         http.send();
@@ -126,6 +101,7 @@
                 av = document.querySelector("head > meta:nth-child(12)").content.split("av")[1].replace("/", "");
                 var csrf = document.cookie.split("bili_jct=")[1].split(";")[0];
                 http.send("aid=" + av + "&multiply=1&select_like=1&cross_domain=true&csrf=" + csrf);
+                toubiIsOnLoad = false;
             }
         }
     }
@@ -137,12 +113,37 @@
             http.onreadystatechange = function () {
                 if(http.readyState==4&&http.status==200){
                     shoucangJSON = JSON.parse(http.responseText);
-                    console.log(shoucangJSON);
                     shoucangJSON = shoucangJSON.data.list;
-                    console.log(shoucangJSON);
                 }
             }
             http.send();
         }
+    }
+    function Toshoucang() {
+
+        if(document.querySelector("#arc_toolbar_report > div.ops > span.collect").className=="collect"&&document.querySelector("head > meta:nth-child(12)").content.indexOf("av")!=-1){
+            //发送收藏请求
+            var url = "https://api.bilibili.com/x/v3/fav/resource/deal";
+            av = document.querySelector("head > meta:nth-child(12)").content.split("av")[1].replace("/","");
+            var csrf = document.cookie.split("bili_jct=")[1].split(";")[0];
+            var canshu = "rid="+av+"&type=2&add_media_ids=1&del_media_ids=&jsonp=jsonp&csrf="+csrf;
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST",url,true);
+            xhr.withCredentials = true;
+            xhr.setRequestHeader("content-type","application/x-www-form-urlencoded");
+
+            xhr.onreadystatechange = function () {
+                var XMLHttpReq = xhr;
+                if(XMLHttpReq.readyState==4&&XMLHttpReq.status==200){
+                    var data = XMLHttpReq.responseText;
+                    document.querySelector("#arc_toolbar_report > div.ops > span.collect").setAttribute("class","collect on");
+                }
+
+            }
+            //var a = JSON.stringify(postData);
+            xhr.send(canshu);
+
+        }
+
     }
 })();
